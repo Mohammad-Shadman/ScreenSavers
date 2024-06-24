@@ -136,7 +136,19 @@ void UpdateParticles(){
         
 
         //show trail
-        
+
+        for(int j = TRAIL_COUNT-1; j>=0; j--){
+            gParticleSet[i].trail[j].pos.radius *=0.9;
+            
+            //check the radius less than 0, if so, shift all the elemints in the array to the left and then place the one that shrank to the start
+            if (gParticleSet[i].trail[j].pos.radius < 1){
+                gParticleSet[i].trail[j].pos = gParticleSet[i].pos;
+            }
+            DrawDot(gParticleSet[i].trail[j].pos.center,gParticleSet[i].trail[j].pos.radius,1,gParticleSet[i].trail[j].pixel);
+        }
+
+
+        /*
         for (int j = TRAIL_COUNT-1; j >= 0; j--)
         {   
             if (j<0) continue;
@@ -166,11 +178,11 @@ void UpdateParticles(){
             }
             //Vadd(&gParticleSet[i].trail[j].pos.center,VscaleR(gParticleSet[i].trail[j].vel,dT));
             //gParticleSet[i].trail[j].pos.center = j-1 > 0 ? VaddR(gParticleSet[i].trail[j-1].pos.center,VscaleR(VnormR(gParticleSet[i].trail[j-1].vel),-1)) : VaddR(gParticleSet[i].pos.center,VscaleR(VnormR(gParticleSet[i].vel),-1));
-            gParticleSet[i].trail[j].pos.center = j-1 > 0 ? VaddR(gParticleSet[i].pos.center,VscaleR( VnormR(gParticleSet[i].trail[j-1].vel), -gParticleSet[i].trail[j-1].pos.radius*(j+1))) : ;
+            //gParticleSet[i].trail[j].pos.center = j-1 > 0 ? VaddR(gParticleSet[i].trail[j-1].pos.center,VscaleR( VnormR(gParticleSet[i].trail[j-1].vel), -gParticleSet[i].trail[j-1].pos.radius)) : VaddR(gParticleSet[i].pos.center,VscaleR( VnormR(gParticleSet[i].vel), -gParticleSet[i].trail[j-1].pos.radius));
             
             DrawDot(gParticleSet[i].trail[j].pos.center,gParticleSet[i].trail[j].pos.radius,1,gParticleSet[i].trail[j].pixel);
 
-        }
+        }*/
         //DrawDot(gParticleSet[i].trail[0].pos.center,gParticleSet[i].trail[0].pos.radius,1,gParticleSet[i].trail[0].pixel);
         
         //draw main particle

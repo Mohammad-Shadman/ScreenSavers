@@ -103,8 +103,8 @@ struct tm * timeinfo;
 
 double dT =0;
 
-#define TRAIL_COUNT 7
-Particle gParticleSet[200];
+#define TRAIL_COUNT 20
+Particle gParticleSet[50];
 int gParticleCount = sizeof(gParticleSet)/sizeof(Particle);
 
 //PPlanet gPlanetSet[20];
