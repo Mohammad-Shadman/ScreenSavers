@@ -1,3 +1,6 @@
+#ifndef MAINCONSTS_H
+#define MAINCONSTS_H
+
 #include <stdint.h>
 #include <windows.h>
 #include <winuser.h>
@@ -5,9 +8,14 @@
 #include <stdlib.h>
 #include <threads.h>
 #include "Vec.h"
+#include "LinkedLists.h"
 
 
-
+//const defines
+#define MAX_VELOCITY 40
+#define PI 3.14159265358979323846
+#define nScreenWidth  (1920.0)   // Console Screen Size X (columns)
+#define nScreenHeight (1080.0)	// Console Screen Size Y (rows)
 
 #define SCRN_WIDTH 1920
 #define SCRN_HEIGHT 1080
@@ -37,21 +45,6 @@ void* Memory;
 }GBM, *PGBM;
 
 
-typedef struct Pixel32{
-    uint8_t Blue;
-    uint8_t Green;
-    uint8_t Red;
-    uint8_t Alpha;
-    
-
-}Pix32, Pix, *PPix32;
-
-typedef struct Circle{
-    Vector center;
-    double radius;
-    Pix pixel;
-} Circle,*PCircle;
-
 typedef struct Particle{
     
     Circle pos;
@@ -60,7 +53,9 @@ typedef struct Particle{
     double mass;
     Pix32 pixel; 
     BOOL isOutOFBounds;
-    struct Particle* trail;
+    LL trail;
+    double trailSpawnTime;
+    double timeOfLastSpawn;
     
 }Particle,*PParticle;
 
@@ -104,22 +99,16 @@ struct tm * timeinfo;
 double dT =0;
 
 #define TRAIL_COUNT 20
-Particle gParticleSet[50];
+Particle gParticleSet[200];
 int gParticleCount = sizeof(gParticleSet)/sizeof(Particle);
+//double trailSpawnTime = 0.333333;
+//double timeOfLastSpawn = 0;
 
-//PPlanet gPlanetSet[20];
-//int gPlanetCount = sizeof(gPlanetSet)/sizeof(Planet);
-unsigned long long gTrailCount =0;
+
 //////////////////////////////////////////////////////////////////////////////
-
-//const defines
-#define MAX_VELOCITY 40
-#define PI 3.14159265358979323846
-#define nScreenWidth  (1920.0)   // Console Screen Size X (columns)
-#define nScreenHeight (1080.0)	// Console Screen Size Y (rows)
 
 //center of the scrn
 Vector gCenterVec = {SCRN_WIDTH/2,SCRN_HEIGHT/2,0};
 
 
-
+#endif
