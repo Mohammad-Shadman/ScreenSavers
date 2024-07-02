@@ -76,6 +76,7 @@ void InitParticle(){
         Vrotate(&gParticleSet[i].vel,(double)rand()/(rand()%100+1));
         gParticleSet[i].pixel = (Pix32){0xff-(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel)),0,(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel))};
         gParticleSet[i].isOutOFBounds = 0;
+        
         //gParticleSet[i].trail = (PParticle)malloc(sizeof(Particle)*TRAIL_COUNT);
         //make trail
         // for (size_t j = 0; j < TRAIL_COUNT; j++)
@@ -90,7 +91,7 @@ void InitParticle(){
         //    
         // }
         LLinitList(&gParticleSet[i].trail,gParticleSet->pos);
-        gParticleSet[i].trailSpawnTime = 1/(1+VmagR(gParticleSet[i].vel)/(MAX_VELOCITY/4));
+        gParticleSet[i].trailSpawnTime = 1/(1+VmagR(gParticleSet[i].vel)/(MAX_VELOCITY/2));
         gParticleSet[i].timeOfLastSpawn = clock();
     }
     
@@ -100,8 +101,8 @@ void InitParticle(){
 void UpdateParticles(){
     if (dT>0.16){dT=0.16;}
     Vector oldPos1,oldPos2;
-    for (size_t i = 0; i< gParticleCount; i++){
-        oldPos1 = gParticleSet[i].pos.center;
+    for (int i = 0; i< gParticleCount; i++){
+        
         //phisics
         BOOL xOutOfBounds = (gParticleSet[i].pos.center.x + gParticleSet[i].pos.radius > MAX_BOUND_X || gParticleSet[i].pos.center.x - gParticleSet[i].pos.radius < MIN_BOUND_X);
         BOOL yOutOfBounds = (gParticleSet[i].pos.center.y + gParticleSet[i].pos.radius > MAX_BOUND_Y || gParticleSet[i].pos.center.y - gParticleSet[i].pos.radius < MIN_BOUND_Y);
@@ -129,31 +130,35 @@ void UpdateParticles(){
                 
         }
         
-        //Vadd(&gParticleSet[i].vel,VscaleR(gParticleSet[i].acc,dT));
+        
         Vadd(&gParticleSet[i].pos.center,VscaleR(gParticleSet[i].vel,dT));
-        gParticleSet[i].pixel = (Pix32){0xff-(int)Map(0,MAX_VELOCITY,0,gParticleSet[i].pixel.Blue,VmagR(gParticleSet[i].vel)),0,(int)Map(0,MAX_VELOCITY,0,gParticleSet[i].pixel.Red,VmagR(gParticleSet[i].vel))};
-        //Vadd(&gParticleSet[i].acc,VscaleR(gParticleSet[i].acc,-0.2));
+        //gParticleSet[i].pixel = (Pix32){0xff-(int)Map(0,MAX_VELOCITY,0,gParticleSet[i].pixel.Blue,VmagR(gParticleSet[i].vel)), 0, (int)Map(0,MAX_VELOCITY,0,gParticleSet[i].pixel.Red,VmagR(gParticleSet[i].vel))};
 
-        //random crashes from here     
+        //crashes due to remove and pop functions, could be due to the colissions ||| wrong, its due to accessing curr and its components
         //make trail with linked lists if its time to spawn it
-        if((clock()-gParticleSet[i].timeOfLastSpawn)/CLOCKS_PER_SEC >= gParticleSet[i].trailSpawnTime){
+        if((clock()-gParticleSet[i].timeOfLastSpawn)/(CLOCKS_PER_SEC*0.7) >= gParticleSet[i].trailSpawnTime){
 
             LLinsert(&gParticleSet[i].trail,0,gParticleSet[i].pos);
             gParticleSet[i].timeOfLastSpawn = clock();
         }
         long long cc = 0;
         NodePtr curr =  gParticleSet[i].trail.head;
-            while (curr != NULL){                
-                if (curr->data.radius < 1){
-                    //LLremoveAtIndex(&gParticleSet[i].trail,cc);
-                }else{
-                    curr->data.radius*= (1-gParticleSet[i].trailSpawnTime*dT) > 0? (1-gParticleSet[i].trailSpawnTime*dT) :-(1-gParticleSet[i].trailSpawnTime*dT);
-                    curr->data.pixel = (Pix){0xff-(int)Map(0,gParticleSet[i].pos.radius,1,0xfe,curr->data.radius),0,(int)Map(0,gParticleSet[i].pos.radius,1,0xfe,curr->data.radius)};
+            while (curr >= (void*)0x1000){            
+                
+                if (curr->data.radius < 0.7 ){
+                    LLremoveAtIndex(&gParticleSet[i].trail,cc);
+                }
+                else{
+                    curr->data.radius *= (1-gParticleSet[i].trailSpawnTime*dT) > 0 ? (1-0.5*gParticleSet[i].trailSpawnTime*dT) : -(1-0.5*gParticleSet[i].trailSpawnTime*dT);
+                    curr->data.pixel = (Pix){0xff-(int)Map(0,gParticleSet[i].pos.radius-1,0,gParticleSet[i].pixel.Blue,curr->data.radius),
+                                            0,
+                                            (int)Map(0,gParticleSet[i].pos.radius-1,0,gParticleSet[i].pixel.Red,curr->data.radius),
+                                            (int)Map(0,gParticleSet[i].pos.radius,0,0xff,curr->data.radius)};
                     DrawDot(curr->data.center,curr->data.radius,1,curr->data.pixel);
                     cc++;
                 }
-                
                 curr = curr->next;
+            
             }
             
 
@@ -281,7 +286,7 @@ void mCreateWindow(){
         }
     }
     
-    ShowWindow(GetConsoleWindow(),SW_HIDE);
+    //ShowWindow(GetConsoleWindow(),SW_HIDE);
     WNDCLASSEXA wc;
     
     //assigning the window class
@@ -327,11 +332,12 @@ void RenderFrameGraphics(){
 
     HDC deviceContext = GetDC(gTheWindow);
     
+    
     StretchDIBits(deviceContext,
                     0, 0, gMonitorWidth, gMonitorHeight,
                     0, 0, SCRN_WIDTH, SCRN_HEIGHT,
                     gBackBuffer.Memory, &gBackBuffer.BitmapInfo,
-                    DIB_RGB_COLORS, SRCCOPY);
+                    DIB_PAL_COLORS, SRCCOPY);
 
     // for (size_t i = 0; i < SCRN_WIDTH*SCRN_HEIGHT/2; i++)
     // {

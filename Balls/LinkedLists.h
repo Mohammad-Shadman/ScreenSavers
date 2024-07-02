@@ -38,35 +38,39 @@ void LLinitList(LL *list,Circle data){
 }
 
 void LLappend(LL *list, Circle data){
-    NodePtr curr = list->head;
-    if(list->head->next == NULL){
-        NodePtr added = (NodePtr)malloc(sizeof(Node));
-        added->data = data;
-        added->next = NULL;
-        list->head->next = added;
+    if (list->head == NULL){
+        LLinitList(list, data);
         return;
     }
+    
+    NodePtr curr = list->head;
     while(curr->next != NULL){
         curr = curr->next;
     }
-    NodePtr added = (NodePtr)malloc(sizeof(Node));
-    added->data = data;
-    added->next = NULL;
-    curr->next = added;
+    curr->next = (NodePtr)malloc(sizeof(Node));
+    curr->next->data = data;
+    curr->next->next = NULL;
+    
     list->len++;
 }
 
 void LLinsert(LL *list, int index, Circle data){
+    if (list->head == NULL){
+        LLinitList(list, data);
+        list->len++;
+        return;
+    }
     NodePtr curr = list->head;
     if (index == 0){
         NodePtr added = (NodePtr)malloc(sizeof(Node));
         added->data = data;
         added->next = list->head;
         list->head = added;
+        list->len++;
         return;
     }
     int i = 0;
-    while(curr->next != NULL && i < index){
+    while(curr->next != NULL && i < index-1){
         curr = curr->next;
         i++;
     }
@@ -78,9 +82,16 @@ void LLinsert(LL *list, int index, Circle data){
 }
 
 void LLpop(LL *list){
-    if(list->head->next == NULL){
+    if (list->head == NULL){
         return;
     }
+    if (list->head->next == NULL){
+        free(list->head);
+        list->head = NULL;
+        list->len--;
+        return;
+    }
+
     NodePtr curr = list->head;
     NodePtr prev;
     while(curr->next != NULL){
@@ -88,10 +99,14 @@ void LLpop(LL *list){
         curr = curr->next;
     }
     prev->next = NULL;
-    free((NodePtr)curr);
     list->len--;
+    free(curr);
+    curr = NULL;
+    return;
+    
     
 }
+
 //problem here and idk what
 void LLremoveAtIndex(LL *list,int index){
     NodePtr curr = list->head;
@@ -99,19 +114,28 @@ void LLremoveAtIndex(LL *list,int index){
     if(index ==0){
         prev = list->head;
         list->head = list->head->next;
-        free((NodePtr)prev);
+        free(prev);
+        prev = NULL;
         return;
     }
-    int i = 0;
-    while(curr->next != NULL && i < index-1){
+    int j = 0;
+    while(curr->next != NULL && j < index-1){
         prev = curr;
         curr = curr->next;
-        i++;
+        j++;
     }
     NodePtr temp = curr->next;
+    if(curr->next == NULL){
+        prev->next = NULL;
+        free(curr);
+        curr = NULL;
+        list->len--;
+        return;
+    }
     curr->next= curr->next->next;
-    //prev->next = NULL;
-    free((NodePtr)temp);
+    free(temp);
+    temp = NULL;
+    
     list->len--;
 }
 
@@ -143,10 +167,10 @@ void LLfreeAll(LL *list){
     while(curr->next != NULL){
         toBeRemoved = curr;
         curr = curr->next;
-        free((NodePtr)toBeRemoved);
+        free(toBeRemoved);
         
     }
-    free((NodePtr)curr);
+    free(curr);
 }
 
 #endif

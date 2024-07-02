@@ -2,11 +2,12 @@
 #define MAINCONSTS_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <windows.h>
 #include <winuser.h>
 #include <time.h>
 #include <stdlib.h>
-#include <threads.h>
+//#include <threads.h>
 #include "Vec.h"
 #include "LinkedLists.h"
 
@@ -98,8 +99,8 @@ struct tm * timeinfo;
 
 double dT =0;
 
-#define TRAIL_COUNT 20
-Particle gParticleSet[200];
+//#define TRAIL_COUNT 20
+Particle gParticleSet[100];
 int gParticleCount = sizeof(gParticleSet)/sizeof(Particle);
 //double trailSpawnTime = 0.333333;
 //double timeOfLastSpawn = 0;
