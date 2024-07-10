@@ -60,7 +60,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         GetUserInput();
 
         RenderFrameGraphics();
-        //Sleep(0);
+        Sleep(0);
         end = clock();
         dT = (double)(end - start)/(double)1000;        
         

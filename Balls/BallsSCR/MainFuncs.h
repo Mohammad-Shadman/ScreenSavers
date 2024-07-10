@@ -75,7 +75,7 @@ void InitParticle(){
     srand(clock()+timeinfo->tm_min+timeinfo->tm_hour+timeinfo->tm_sec);
     for (size_t i = 0; i< gParticleCount; i++){
         gParticleSet[i].pos.center = (Vector) {rand()%200 - rand()%200 + gCenterVec.x, rand()%200 - rand()%200 + gCenterVec.y};
-        gParticleSet[i].pos.radius = rand()%10+5;
+        gParticleSet[i].pos.radius = rand()%6+5;
         gParticleSet[i].vel = (Vector){rand()%(speed+1)-speed/2,rand()%(speed+1)-speed/2};
         gParticleSet[i].acc = (Vector){rand()%(speed+1)-speed/2,rand()%(speed+1)-speed/2};
         Vrotate(&gParticleSet[i].vel,(double)rand()/(rand()%100+1));
