@@ -57,8 +57,8 @@ void DrawDot(Vector point, double radius, BOOL fill, Pix32 pix){
     Circle dot = {point,radius};
     for (size_t i = 0; i < count; i++)
     {
-        if (dot.radius <1){dot.radius = 2;}
-        DrawCircle(dot,dot.radius*dot.radius*PI+100,pix);
+        if (dot.radius <1){dot.radius = 1;continue;}
+        DrawCircle(dot,dot.radius*PI*4,pix);
 
         dot.radius--;
     }
@@ -73,14 +73,15 @@ void InitParticle(){
     timeinfo = localtime(&rawtime);
     int speed = MAX_VELOCITY;
     srand(clock()+timeinfo->tm_min+timeinfo->tm_hour+timeinfo->tm_sec);
-    for (size_t i = 0; i< gParticleCount; i++){
-        gParticleSet[i].pos.center = (Vector) {rand()%200 - rand()%200 + gCenterVec.x, rand()%200 - rand()%200 + gCenterVec.y, rand()%15 +5};
+    for (size_t i = 0; i< PARTICLE_COUNT; i++){
+        gParticleSet[i].pos.center = (Vector) {rand()%200 - rand()%200 + gCenterVec.x, rand()%200 - rand()%200 + gCenterVec.y, rand()%100 +50};
         gParticleSet[i].pos.radius = rand()%10+5;
         gParticleSet[i].vel = (Vector){0,0};
         gParticleSet[i].acc = (Vector){rand()%(speed+1)-speed/2,rand()%(speed+1)-speed/2};
         Vrotate(&gParticleSet[i].vel,(double)rand()/(rand()%100+1));
         gParticleSet[i].pixel = (Pix32){0xff-(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel)),0,(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel))};
         gParticleSet[i].isOutOFBounds = 0;
+        gParticleSet[i].isCollided = 0;
         
     }
     
@@ -90,12 +91,12 @@ void InitParticle(){
 void UpdateParticles(){
     if (dT>0.16){dT=0.16;}
     Vector oldPos1,oldPos2;
-    for (int i = 0; i< gParticleCount; i++){
+    for (int i = 0; i< PARTICLE_COUNT; i++){
         
         //phisics
         BOOL xOutOfBounds = (gParticleSet[i].pos.center.x + gParticleSet[i].pos.radius > MAX_BOUND_X || gParticleSet[i].pos.center.x - gParticleSet[i].pos.radius < MIN_BOUND_X);
         BOOL yOutOfBounds = (gParticleSet[i].pos.center.y + gParticleSet[i].pos.radius > MAX_BOUND_Y || gParticleSet[i].pos.center.y - gParticleSet[i].pos.radius < MIN_BOUND_Y);
-
+        //border boundery collision detection
         if (gParticleSet[i].isOutOFBounds==0){
         
             if (xOutOfBounds){
@@ -118,22 +119,61 @@ void UpdateParticles(){
                 gParticleSet[i].isOutOFBounds = 0;
                 
         }
+
+
+
+        //handel gravity with all objects and circular colisions
+        // for(int j = 0; j < PARTICLE_COUNT; j++){
+        //     if(i==j){continue;}
+        //     Vector forceDir = VsubR(gParticleSet[j].pos.center, gParticleSet[i].pos.center);
+        //     double dist = VmagR(forceDir);
+        //     if (gParticleSet[i].isCollided==1 && dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){break;}
+            
+        //     if (gParticleSet[i].isCollided==0 && dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){
+        //         gParticleSet[i].isCollided=1;
+                
+        //         //gParticleSet[j].isCollided=1;
+
+        //         Vrotate(&gParticleSet[i].vel,VangleBetween(VnormR(gParticleSet[i].vel),VnormR(forceDir)));
+        //         //Vscale(&gParticleSet[i].acc,-1);
+                
+        //         //Vscale(&gParticleSet[j].vel,-1);
+        //         //Vscale(&gParticleSet[j].acc,-1);
+                
+        //         break;
+        //     }
+        //     if(gParticleSet[i].isCollided==1 && dist > gParticleSet[j].pos.radius+gParticleSet[i].pos.radius){
+        //         gParticleSet[i].isCollided=0;
+        //     }
+        // }
+
         Vector sumForces = (Vector){0,0};
-        for (int j = 0; j < gParticleCount; j++)
-        {
+        #define G_CONST 0.1
+        for (int j = 0; j < PARTICLE_COUNT; j++)
+        {   
             if (i!=j){
-                Vector forceDir = VsubR(gParticleSet[i].pos.center,gParticleSet[j].pos.center);
+                
+                Vector forceDir = VsubR(gParticleSet[j].pos.center,gParticleSet[i].pos.center);
                 double dist = VmagR(forceDir);
-                double forceQuant = gParticleSet[j].pos.center.m*gParticleSet[i].pos.center.m/(dist*dist);
+                double forceQuant = G_CONST*gParticleSet[j].pos.center.m*gParticleSet[i].pos.center.m/(dist*dist);
                 Vnorm(&forceDir);
-                Vadd(&sumForces, VscaleR(forceDir,forceQuant));
+                if(dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){
+                    Vadd(&gParticleSet[i].pos.center,VscaleR(forceDir,0.5*(dist-(gParticleSet[j].pos.radius + gParticleSet[i].pos.radius))));
+                    Vadd(&gParticleSet[j].pos.center,VscaleR(forceDir,-0.5*(dist-(gParticleSet[j].pos.radius + gParticleSet[i].pos.radius))));
+                    
+                    Vadd(&sumForces,VscaleR(forceDir,-forceQuant*gParticleSet[i].pos.center.m/gParticleSet[j].pos.center.m));
+                }else{
+                
+                    Vadd(&sumForces, VscaleR(forceDir,forceQuant));
+                }
             }
         }
+        
         gParticleSet[i].acc = VscaleR(sumForces,1/gParticleSet[i].pos.center.m);
-        Vadd(&gParticleSet[i].vel,VscaleR(gParticleSet[i].acc,dT));
+        Vadd(&gParticleSet[i].vel,VscaleR(gParticleSet[i].acc,1));
         
         Vadd(&gParticleSet[i].pos.center,VscaleR(gParticleSet[i].vel,dT));
-            
+        gParticleSet[i].pixel = (Pix32){0xff-(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel)),0,(int)Map(0,MAX_VELOCITY,0,0xff,VmagR(gParticleSet[i].vel))};
         //draw main particle
         DrawDot(gParticleSet[i].pos.center,gParticleSet[i].pos.radius,1,gParticleSet[i].pixel);     
         
@@ -141,7 +181,7 @@ void UpdateParticles(){
 }
 
 void ReleaseTrail(){
-    for (size_t i = 0; i < gParticleCount; i++)
+    for (size_t i = 0; i < PARTICLE_COUNT; i++)
     {
         //LLfreeAll(&gParticleSet[i].trail);
         

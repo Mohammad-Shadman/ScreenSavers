@@ -13,7 +13,9 @@
 
 
 //const defines
-#define MAX_VELOCITY 40
+#define MAX_VELOCITY 80
+#define PARTICLE_COUNT 50
+
 #define PI 3.14159265358979323846
 #define nScreenWidth  (1920.0)   // Console Screen Size X (columns)
 #define nScreenHeight (1080.0)	// Console Screen Size Y (rows)
@@ -54,6 +56,7 @@ typedef struct Particle{
     double mass;
     Pix32 pixel; 
     BOOL isOutOFBounds;
+    BOOL isCollided;
     //LL planets;
     
     
@@ -96,8 +99,8 @@ struct tm * timeinfo;
 
 double dT =0;
 
-Particle gParticleSet[10];
-int gParticleCount = sizeof(gParticleSet)/sizeof(Particle);
+Particle gParticleSet[PARTICLE_COUNT];
+//int gParticleCount = sizeof(gParticleSet)/sizeof(Particle);
 
 
 

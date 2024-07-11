@@ -99,6 +99,11 @@ Vector VrotateR (Vector v1, double angle){
     v1.y = (temp * sin(angle)) + (v1.y * cos(angle));
     return v1;
 }
+double VangleBetween(Vector v1, Vector v2){
+    double mags = VmagR(v1)*VmagR(v2);
+    if(mags==0){return 0;}
+    return acos(Vdot(v1,v2)/(mags));
+}
 //cos -sin |  x
 //         |
 //sin cos  |  y
