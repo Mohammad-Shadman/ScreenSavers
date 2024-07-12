@@ -14,7 +14,7 @@
 
 //const defines
 #define MAX_VELOCITY 80
-#define PARTICLE_COUNT 50
+#define PARTICLE_COUNT 100
 
 #define PI 3.14159265358979323846
 #define nScreenWidth  (1920.0)   // Console Screen Size X (columns)

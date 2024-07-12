@@ -57,7 +57,7 @@ void DrawDot(Vector point, double radius, BOOL fill, Pix32 pix){
     Circle dot = {point,radius};
     for (size_t i = 0; i < count; i++)
     {
-        if (dot.radius <1){dot.radius = 1;continue;}
+        if (dot.radius <0){dot.radius = 0;continue;}
         DrawCircle(dot,dot.radius*PI*4,pix);
 
         dot.radius--;
@@ -74,8 +74,9 @@ void InitParticle(){
     int speed = MAX_VELOCITY;
     srand(clock()+timeinfo->tm_min+timeinfo->tm_hour+timeinfo->tm_sec);
     for (size_t i = 0; i< PARTICLE_COUNT; i++){
-        gParticleSet[i].pos.center = (Vector) {rand()%200 - rand()%200 + gCenterVec.x, rand()%200 - rand()%200 + gCenterVec.y, rand()%100 +50};
         gParticleSet[i].pos.radius = rand()%10+5;
+        gParticleSet[i].pos.center = (Vector) {rand()%200 - rand()%200 + gCenterVec.x, rand()%200 - rand()%200 + gCenterVec.y, gParticleSet[i].pos.radius*gParticleSet[i].pos.radius*PI};
+        
         gParticleSet[i].vel = (Vector){0,0};
         gParticleSet[i].acc = (Vector){rand()%(speed+1)-speed/2,rand()%(speed+1)-speed/2};
         Vrotate(&gParticleSet[i].vel,(double)rand()/(rand()%100+1));
@@ -127,19 +128,14 @@ void UpdateParticles(){
         //     if(i==j){continue;}
         //     Vector forceDir = VsubR(gParticleSet[j].pos.center, gParticleSet[i].pos.center);
         //     double dist = VmagR(forceDir);
-        //     if (gParticleSet[i].isCollided==1 && dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){break;}
-            
+        //     if (gParticleSet[i].isCollided==1 && dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){break;}   
         //     if (gParticleSet[i].isCollided==0 && dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){
         //         gParticleSet[i].isCollided=1;
-                
         //         //gParticleSet[j].isCollided=1;
-
         //         Vrotate(&gParticleSet[i].vel,VangleBetween(VnormR(gParticleSet[i].vel),VnormR(forceDir)));
         //         //Vscale(&gParticleSet[i].acc,-1);
-                
         //         //Vscale(&gParticleSet[j].vel,-1);
         //         //Vscale(&gParticleSet[j].acc,-1);
-                
         //         break;
         //     }
         //     if(gParticleSet[i].isCollided==1 && dist > gParticleSet[j].pos.radius+gParticleSet[i].pos.radius){
@@ -158,12 +154,29 @@ void UpdateParticles(){
                 double forceQuant = G_CONST*gParticleSet[j].pos.center.m*gParticleSet[i].pos.center.m/(dist*dist);
                 Vnorm(&forceDir);
                 if(dist <= gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){
+                    if(gParticleSet[i].isCollided==1 && dist < gParticleSet[j].pos.radius + gParticleSet[i].pos.radius){continue;}
+                    gParticleSet[i].isCollided= 1;
                     Vadd(&gParticleSet[i].pos.center,VscaleR(forceDir,0.5*(dist-(gParticleSet[j].pos.radius + gParticleSet[i].pos.radius))));
                     Vadd(&gParticleSet[j].pos.center,VscaleR(forceDir,-0.5*(dist-(gParticleSet[j].pos.radius + gParticleSet[i].pos.radius))));
-                    
-                    Vadd(&sumForces,VscaleR(forceDir,-forceQuant*gParticleSet[i].pos.center.m/gParticleSet[j].pos.center.m));
+                    Vector pointOfContact = VrotateR(VnormR(VTurn90R(forceDir)),PI), velPrimeI = VnormR(gParticleSet[i].vel), velPrimeJ = VnormR(gParticleSet[j].vel);
+                    Vrotate(&velPrimeI,2*acos(Vdot(velPrimeI,pointOfContact)));
+                    Vscale(&velPrimeI,VmagR(gParticleSet[i].vel));
+                    Vrotate(&velPrimeJ,2*acos(Vdot(velPrimeJ,pointOfContact)));
+                    Vscale(&velPrimeJ,VmagR(gParticleSet[j].vel));
+                    gParticleSet[i].vel = velPrimeI;
+                    gParticleSet[j].vel = velPrimeJ;
+                    //Vadd(&sumForces,VscaleR(velPrimeI,1/gParticleSet[i].pos.center.m));
+                    //Vadd(&sumForces,VscaleR(forceDir,-forceQuant));
                 }else{
-                
+                    BOOL stillCollided = 0;
+                    for (int k = 0; k < PARTICLE_COUNT; k++)
+                    {
+                        if (dist <= gParticleSet[i].pos.radius + gParticleSet[k].pos.radius && i!=k){stillCollided =1; break;}
+
+                    }
+                    if (stillCollided == 0){
+                        gParticleSet[i].isCollided = 0;
+                    }
                     Vadd(&sumForces, VscaleR(forceDir,forceQuant));
                 }
             }
